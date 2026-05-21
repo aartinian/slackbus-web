@@ -1,1 +1,1 @@
-# slackbus-landing
+# slackbus-web
