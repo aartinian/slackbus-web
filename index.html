@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SlackBus — A sandbox for power systems.</title>
+  <meta name="description" content="An interactive power-systems sandbox for students and lecturers. Coming soon at slackbus.dev." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="theme.js"></script>
+
+  <style>
+    html, body { min-height: 100%; }
+    body { display: flex; flex-direction: column; }
+
+    /* ─── Top bar ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px var(--pad-x);
+    }
+    .topbar .brand { font-size: 17px; }
+    .topbar .right { display: inline-flex; align-items: center; gap: 18px; }
+    .topbar .meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .topbar .meta a { color: inherit; transition: color .15s; }
+    .topbar .meta a:hover { color: var(--accent); }
+
+    /* ─── Hero ─── */
+    .stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: clamp(40px, 8vh, 96px) var(--pad-x);
+      max-width: var(--maxw);
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      margin-bottom: 28px;
+    }
+    .status-pill .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+      animation: pulse 2.2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+    h1.headline {
+      font-size: clamp(44px, 7.2vw, 92px);
+      line-height: 0.98;
+      letter-spacing: -0.035em;
+      font-weight: 500;
+      margin: 0;
+      max-width: 16ch;
+    }
+    h1.headline .accent-word {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+
+    .lede {
+      margin-top: 28px;
+      font-size: clamp(17px, 1.55vw, 20px);
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 54ch;
+    }
+    .lede em { font-style: italic; color: var(--ink-2); }
+
+    @media (max-width: 920px) {
+      .stage {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        padding-top: 16px;
+        padding-bottom: 36px;
+      }
+    }
+    @media (max-width: 540px) {
+      .marks-row { grid-template-columns: repeat(2, 1fr); }
+      .topbar { padding: 16px var(--pad-x); }
+      .topbar .meta { display: none; }
+    }
+
+    /* ─── Footer strip ─── */
+    .footstrip {
+      border-top: 1px solid var(--line-soft);
+      padding: 16px var(--pad-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .footstrip a { color: inherit; transition: color .15s; }
+    .footstrip a:hover { color: var(--accent); }
+    .footstrip .right { display: inline-flex; gap: 22px; align-items: center; }
+
+    /* ─── Tweaks panel ─── */
+    .tweaks {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 280px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.10);
+      padding: 16px;
+      z-index: 100;
+      display: none;
+      font-family: var(--font-sans);
+    }
+    .tweaks.show { display: block; }
+    .tweaks-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .tweaks-head button {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .tweaks-head button:hover { color: var(--ink); }
+    .tweaks-section { margin-bottom: 14px; }
+    .tweaks-section:last-child { margin-bottom: 0; }
+    .tweaks-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .tweaks-swatches {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .swatch {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 2px solid var(--line);
+      cursor: pointer;
+      transition: transform .08s, border-color .15s;
+      position: relative;
+    }
+    .swatch:hover { transform: scale(1.05); }
+    .swatch.active { border-color: var(--ink); }
+    .swatch.active::after {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border-radius: 8px;
+      border: 1px solid var(--ink);
+    }
+  </style>
+</head>
+<body>
+  <!-- ────────── TOP BAR ────────── -->
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="SlackBus home">
+      <span id="brandMarkSlot" style="display: inline-flex;"></span>
+      <span>SlackBus</span>
+    </a>
+    <div class="right">
+      <span class="meta">slackbus.dev</span>
+      <button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle theme">
+        <svg class="moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ────────── HERO ────────── -->
+  <main class="stage">
+    <div>
+      <span class="status-pill"><span class="dot"></span>Coming next semester · free for students</span>
+      <h1 class="headline">
+        The power-systems lab<br/>
+        your <span class="accent-word">lectures</span> don't have.
+      </h1>
+      <p class="lede">
+        Open a grid. Change anything. Run the power flow. Watch the network react.
+        Built <em>for</em> the lecture hall, and the late-night study session
+        right after it. <em>Free</em> for students and educators.
+      </p>
+    </div>
+  </main>
+
+  <!-- ────────── FOOT STRIP ────────── -->
+  <footer class="footstrip">
+    <span>© 2026 · SlackBus</span>
+    <span class="right">
+      <a href="mailto:info@slackbus.dev">info@slackbus.dev</a>
+      <span>slackbus.dev</span>
+    </span>
+  </footer>
+
+  <!-- ────────── TWEAKS PANEL ────────── -->
+  <aside class="tweaks" id="tweaks">
+    <div class="tweaks-head">
+      <span>Tweaks</span>
+      <button onclick="closeTweaks()" aria-label="Close tweaks">✕</button>
+    </div>
+    <div class="tweaks-section">
+      <div class="tweaks-label">Accent color</div>
+      <div class="tweaks-swatches" id="accentSwatches"></div>
+    </div>
+  </aside>
+
+  <script>
+    // ─── Brand mark (Radial Hub) ───
+    function renderNavMark() {
+      const slot = document.getElementById('brandMarkSlot');
+      slot.style.color = 'var(--ink)';
+      slot.innerHTML = `
+        <svg width="22" height="22" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" fill="var(--accent)"/>
+          <line x1="12" y1="3" x2="12" y2="8" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="12" y1="16" x2="12" y2="21" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="3" y1="12" x2="8" y2="12" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="16" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="12" cy="3" r="1.3" fill="currentColor"/>
+          <circle cx="12" cy="21" r="1.3" fill="currentColor"/>
+          <circle cx="3" cy="12" r="1.3" fill="currentColor"/>
+          <circle cx="21" cy="12" r="1.3" fill="currentColor"/>
+        </svg>`;
+    }
+
+    // ─── Accent color palette ───
+    const ACCENTS = [
+      { name: 'Amber',      light: '#E8782B', dark: '#FF9447' },
+      { name: 'Green',      light: '#2EB67D', dark: '#3ECF8E' },
+      { name: 'Terracotta', light: '#C84F25', dark: '#E5683F' },
+      { name: 'Crimson',    light: '#DC2626', dark: '#F04444' },
+      { name: 'Indigo',     light: '#4B4DE0', dark: '#7679F0' },
+      { name: 'Charcoal',   light: '#0a0a0a', dark: '#fafafa' },
+    ];
+
+    // ─── State ───
+    const KEY_ACCENT = 'slackbus.accent';
+    let activeAccent = parseInt(localStorage.getItem(KEY_ACCENT) || '0', 10);
+
+    // ─── Brand mark ───
+    function renderNavMark() {
+      const slot = document.getElementById('brandMarkSlot');
+      slot.innerHTML = MARKS[activeMark].render(22);
+      slot.style.color = 'var(--ink)';
+    }
+
+    // ─── Accent ───
+    function hexToRgba(hex, alpha) {
+      const h = hex.replace('#', '');
+      const r = parseInt(h.substr(0, 2), 16);
+      const g = parseInt(h.substr(2, 2), 16);
+      const b = parseInt(h.substr(4, 2), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function applyAccent() {
+      const a = ACCENTS[activeAccent];
+      document.documentElement.style.setProperty('--accent', a.light);
+      document.documentElement.style.setProperty('--accent-soft', hexToRgba(a.light, 0.14));
+      const darkRule = `html[data-theme="dark"] { --accent: ${a.dark} !important; --accent-soft: ${hexToRgba(a.dark, 0.18)} !important; }`;
+      let s = document.getElementById('accentOverride');
+      if (!s) { s = document.createElement('style'); s.id = 'accentOverride'; document.head.appendChild(s); }
+      s.textContent = darkRule;
+    }
+
+    function renderAccentSwatches() {
+      const wrap = document.getElementById('accentSwatches');
+      wrap.innerHTML = ACCENTS.map((a, i) => `
+        <button class="swatch ${i === activeAccent ? 'active' : ''}"
+                style="background: ${a.light};"
+                title="${a.name}"
+                onclick="setAccent(${i})"></button>
+      `).join('');
+    }
+
+    function setAccent(i) {
+      activeAccent = i;
+      localStorage.setItem(KEY_ACCENT, String(i));
+      applyAccent();
+      renderAccentSwatches();
+    }
+
+    // ─── Tweaks panel ───
+    function openTweaks()  { document.getElementById('tweaks').classList.add('show'); }
+    function closeTweaks() { document.getElementById('tweaks').classList.remove('show'); }
+
+    // ─── Keyboard shortcuts ───
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.toLowerCase() === 't') window.__toggleTheme();
+    });
+
+    // ─── Init ───
+    applyAccent();
+    renderNavMark();
+    renderAccentSwatches();
+  </script>
+</body>
+</html>
